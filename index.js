@@ -6,39 +6,35 @@ document.addEventListener("DOMContentLoaded", function () {
     const userError = document.getElementById("userError");
     const segnalazioneError = document.getElementById("segnalazioneError");
 
-    // **Funzione per caricare i messaggi dal server**
+    const API_URL = "http://localhost/ecoctrl-back/message.php?json=true";
+
+    // **Funzione per caricare i messaggi dal backend**
     function updateMessagesGrid2() {
-        fetch("http://localhost/message.php", {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json"
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (!data.success) {
-                console.error("Errore nel recupero dei dati");
-                return;
-            }
+        fetch(API_URL)
+            .then(response => response.json())
+            .then(data => {
+                messagesGrid2.innerHTML = ""; // Pulisce la tabella
 
-            messagesGrid2.innerHTML = ""; // Pulisce la tabella
+                if (!data.success || !data.messages) {
+                    console.error("Errore nel recupero dei dati:", data.message);
+                    return;
+                }
 
-            data.messages.forEach(msg => {
-                const messageRow = document.createElement("tr");
-
-                messageRow.innerHTML = `
-                    <td class="text-center">${msg.user}</td>
-                    <td class="overflow-auto">${msg.message}</td>
-                    <td class="text-center">${msg.timestamp}</td>
-                    <td class="text-center">
-                        <button class="btn btn-warning btn-sm" onclick="editMessage(${msg.id})">Modifica</button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteMessage(${msg.id})">Elimina</button>
-                    </td>
-                `;
-                messagesGrid2.appendChild(messageRow);
-            });
-        })
-        .catch(error => console.error("Errore nel caricamento delle segnalazioni:", error));
+                data.messages.forEach(msg => {
+                    const messageRow = document.createElement("tr");
+                    messageRow.innerHTML = `
+                        <td class="text-center">${msg.user}</td>
+                        <td class="overflow-auto">${msg.message}</td>
+                        <td class="text-center">${msg.timestamp}</td>
+                        <td class="text-center">
+                            <button class="btn btn-warning btn-sm" onclick="editMessage(${msg.id})">Modifica</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteMessage(${msg.id})">Elimina</button>
+                        </td>
+                    `;
+                    messagesGrid2.appendChild(messageRow);
+                });
+            })
+            .catch(error => console.error("Errore nel caricamento delle segnalazioni:", error));
     }
 
     // **Carica la tabella all'avvio**
@@ -48,38 +44,30 @@ document.addEventListener("DOMContentLoaded", function () {
     form.addEventListener("submit", function (event) {
         event.preventDefault();
 
-        let formIsValid = true;
         userError.style.display = "none";
         segnalazioneError.style.display = "none";
         userInput.classList.remove("is-invalid");
         segnalazione.classList.remove("is-invalid");
 
-        const username = userInput.value.trim().toLowerCase();
+        const username = userInput.value.trim();
         const messageText = segnalazione.value.trim();
 
         if (messageText.length < 10) {
-            formIsValid = false;
             segnalazioneError.style.display = "block";
             segnalazione.classList.add("is-invalid");
+            return;
         }
 
-        if (formIsValid) {
-            const formData = {
-                user: username,
-                message: messageText
-            };
+        const formData = { user: username, message: messageText };
 
-            fetch("http://localhost/message.php", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(formData)
-            })
+        fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(formData)
+        })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert("Messaggio salvato con successo!");
                     updateMessagesGrid2();
                     form.reset();
                 } else {
@@ -87,28 +75,24 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             })
             .catch(error => console.error("Errore AJAX:", error));
-        }
     });
 
     // **Funzione per eliminare un messaggio**
     window.deleteMessage = function (messageId) {
-        fetch("http://localhost/message.php", {
+        fetch(API_URL, {
             method: "DELETE",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id: messageId })
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert("Messaggio eliminato con successo!");
-                updateMessagesGrid2();
-            } else {
-                alert("Errore: " + data.message);
-            }
-        })
-        .catch(error => console.error("Errore eliminazione:", error));
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateMessagesGrid2();
+                } else {
+                    alert("Errore: " + data.message);
+                }
+            })
+            .catch(error => console.error("Errore eliminazione:", error));
     };
 
     // **Funzione per modificare un messaggio**
@@ -119,20 +103,17 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        fetch("http://localhost/message.php", {
+        fetch(API_URL, {
             method: "PUT",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id: messageId, message: newMessage.trim() })
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert("Messaggio modificato con successo!");
-                updateMessagesGrid2();
-            }
-        })
-        .catch(error => console.error("Errore modifica:", error));
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateMessagesGrid2();
+                }
+            })
+            .catch(error => console.error("Errore modifica:", error));
     };
 });
