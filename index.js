@@ -8,12 +8,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const API_URL = "http://localhost/ecoctrl-back/message.php?json=true";
 
-    // **Funzione per caricare i messaggi dal backend**
+    // **Lista utenti autorizzati**
+    const allowedUsers = ["Michele", "Andrea", "Franco"];
+
+    // **Funzione per troncare il testo (max 50 caratteri)**
+    function truncateText(text, maxLength = 50) {
+        return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
+    }
+
     function updateMessagesGrid2() {
         fetch(API_URL)
             .then(response => response.json())
             .then(data => {
-                messagesGrid2.innerHTML = ""; // Pulisce la tabella
+                messagesGrid2.innerHTML = "";
 
                 if (!data.success || !data.messages) {
                     console.error("Errore nel recupero dei dati:", data.message);
@@ -24,7 +31,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     const messageRow = document.createElement("tr");
                     messageRow.innerHTML = `
                         <td class="text-center">${msg.user}</td>
-                        <td class="overflow-auto">${msg.message}</td>
+                        <td class="overflow-auto">${truncateText(msg.message)}</td>
                         <td class="text-center">${msg.timestamp}</td>
                         <td class="text-center">
                             <button class="btn btn-warning btn-sm" onclick="editMessage(${msg.id})">Modifica</button>
@@ -40,7 +47,6 @@ document.addEventListener("DOMContentLoaded", function () {
     // **Carica la tabella all'avvio**
     updateMessagesGrid2();
 
-    // **Gestione dell'invio del form**
     form.addEventListener("submit", function (event) {
         event.preventDefault();
 
@@ -52,6 +58,15 @@ document.addEventListener("DOMContentLoaded", function () {
         const username = userInput.value.trim();
         const messageText = segnalazione.value.trim();
 
+        // **Controllo se l'utente è autorizzato**
+        if (!allowedUsers.includes(username)) {
+            userError.style.display = "block";
+            userInput.classList.add("is-invalid");
+            userError.textContent = "Utente non autorizzato!";
+            return;
+        }
+
+        // **Controllo lunghezza messaggio**
         if (messageText.length < 10) {
             segnalazioneError.style.display = "block";
             segnalazione.classList.add("is-invalid");
@@ -76,44 +91,4 @@ document.addEventListener("DOMContentLoaded", function () {
             })
             .catch(error => console.error("Errore AJAX:", error));
     });
-
-    // **Funzione per eliminare un messaggio**
-    window.deleteMessage = function (messageId) {
-        fetch(API_URL, {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id: messageId })
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    updateMessagesGrid2();
-                } else {
-                    alert("Errore: " + data.message);
-                }
-            })
-            .catch(error => console.error("Errore eliminazione:", error));
-    };
-
-    // **Funzione per modificare un messaggio**
-    window.editMessage = function (messageId) {
-        const newMessage = prompt("Modifica il messaggio:");
-        if (!newMessage || newMessage.trim().length < 10) {
-            alert("Il messaggio deve contenere almeno 10 caratteri.");
-            return;
-        }
-
-        fetch(API_URL, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id: messageId, message: newMessage.trim() })
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    updateMessagesGrid2();
-                }
-            })
-            .catch(error => console.error("Errore modifica:", error));
-    };
 });
