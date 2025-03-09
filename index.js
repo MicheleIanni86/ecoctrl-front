@@ -31,14 +31,30 @@ document.addEventListener("DOMContentLoaded", function () {
                     const messageRow = document.createElement("tr");
                     messageRow.innerHTML = `
                         <td class="text-center">${msg.user}</td>
-                        <td class="overflow-auto">${truncateText(msg.message)}</td>
+                        <td class="overflow-auto" title="${msg.message}">${truncateText(msg.message)}</td>
                         <td class="text-center">${msg.timestamp}</td>
                         <td class="text-center">
-                            <button class="btn btn-warning btn-sm" onclick="editMessage(${msg.id})">Modifica</button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteMessage(${msg.id})">Elimina</button>
+                            <button class="btn btn-warning btn-sm edit-btn" data-id="${msg.id}" data-message="${msg.message}">Modifica</button>
+                            <button class="btn btn-danger btn-sm delete-btn" data-id="${msg.id}">Elimina</button>
                         </td>
                     `;
                     messagesGrid2.appendChild(messageRow);
+                });
+
+                // **Aggiunge gli event listener ai pulsanti dopo il caricamento**
+                document.querySelectorAll(".edit-btn").forEach(button => {
+                    button.addEventListener("click", function () {
+                        const messageId = this.getAttribute("data-id");
+                        const currentMessage = this.getAttribute("data-message");
+                        editMessage(messageId, currentMessage);
+                    });
+                });
+
+                document.querySelectorAll(".delete-btn").forEach(button => {
+                    button.addEventListener("click", function () {
+                        const messageId = this.getAttribute("data-id");
+                        deleteMessage(messageId);
+                    });
                 });
             })
             .catch(error => console.error("Errore nel caricamento delle segnalazioni:", error));
@@ -47,6 +63,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // **Carica la tabella all'avvio**
     updateMessagesGrid2();
 
+    // **Gestione dell'invio del form**
     form.addEventListener("submit", function (event) {
         event.preventDefault();
 
@@ -91,4 +108,46 @@ document.addEventListener("DOMContentLoaded", function () {
             })
             .catch(error => console.error("Errore AJAX:", error));
     });
+
+    // **Funzione per modificare un messaggio**
+    function editMessage(messageId, currentMessage) {
+        const newMessage = prompt("Modifica il messaggio:", currentMessage);
+        if (!newMessage || newMessage.trim().length < 10) {
+            alert("Il messaggio deve contenere almeno 10 caratteri.");
+            return;
+        }
+
+        fetch(API_URL, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: messageId, message: newMessage.trim() })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateMessagesGrid2();
+                }
+            })
+            .catch(error => console.error("Errore modifica:", error));
+    }
+
+    // **Funzione per eliminare un messaggio**
+    function deleteMessage(messageId) {
+        if (confirm("Sei sicuro di voler eliminare questo messaggio?")) {
+            fetch(API_URL, {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: messageId })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updateMessagesGrid2();
+                    } else {
+                        alert("Errore: " + data.message);
+                    }
+                })
+                .catch(error => console.error("Errore eliminazione:", error));
+        }
+    }
 });
