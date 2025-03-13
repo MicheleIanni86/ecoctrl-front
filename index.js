@@ -1,64 +1,72 @@
 const API_URL = "http://localhost/ecoctrl-back/api.php";
 
-// Utenti autorizzati e relativi user_id nel database
-const allowedUsers = {
-    "Michele": 1,
-    "Andrea": 2,
-    "Franco": 3
-};
+// Controllo accesso solo per utenti Client
+document.addEventListener("DOMContentLoaded", () => {
+    const user = JSON.parse(localStorage.getItem("user"));
 
-document.getElementById("ticketForm").onsubmit = function (e) {
+    if (!user || user.role !== "Client") {
+        window.location.href = "auth.html"; // Se non è un Client, torna alla pagina di login
+    }
+});
+
+document.getElementById("ticketForm").onsubmit = async function (e) {
     e.preventDefault();
 
-    const username = document.getElementById("userInput").value.trim();
+    const user = JSON.parse(localStorage.getItem("user")); // Ottiene i dati dell'utente loggato
+    if (!user) {
+        alert("Devi essere loggato per inviare una segnalazione.");
+        return;
+    }
+
     const messageText = document.getElementById("segnalazione").value.trim();
 
-    // Controlla se l'utente è autorizzato
-    if (!allowedUsers.hasOwnProperty(username)) {
-        alert("Utente non autorizzato!");
-        return;
-    }
-
-    // Controlla lunghezza messaggio
     if (messageText.length < 10) {
-        alert("Il messaggio deve contenere almeno 10 caratteri.");
+        alert("La segnalazione deve contenere almeno 10 caratteri.");
         return;
     }
 
-    fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            messageText: messageText,
-            user_id: allowedUsers[username],  // Ora usa l'id corretto!
-            ticket_id: 1                      // Usa ID ticket valido
-        })
-    })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                updateMessagesGrid2();
-                document.getElementById("ticketForm").reset();
-            } else {
-                alert(data.message);
-            }
-        })
-        .catch(e => console.error("Errore AJAX:", e));
+    // ✅ Nuovo oggetto dati con action
+    const requestData = {
+        action: "createTicket", // ✅ Specifica l'azione corretta
+        user_id: user.id, // Usa l'ID utente loggato
+        description: messageText
+    };
+
+    console.log("Sto inviando questa richiesta:", requestData); // DEBUG
+
+    try {
+        const response = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestData)
+        });
+
+        const result = await response.json();
+        console.log("Risposta del server:", result); // DEBUG
+
+        if (result.success) {
+            alert("Segnalazione inviata con successo!");
+            document.getElementById("ticketForm").reset();
+        } else {
+            alert("Errore nell'invio della segnalazione: " + result.message);
+        }
+    } catch (error) {
+        console.error("Errore AJAX:", error);
+    }
 };
 
 // Aggiornamento lista messaggi
 function updateMessagesGrid2() {
-    fetch(API_URL)
+    fetch(API_URL + "?action=getMessages") // ✅ Ora passa correttamente l'action
         .then(r => r.json())
         .then(data => {
             let html = "";
             data.messages.forEach(m => {
                 html += `<tr><td class="fw-bold fs-5">${m.user}</td><td>${m.message}</td><td>${m.timestamp}</td></tr>`;
-
             });
             document.getElementById("messagesGrid2").innerHTML = html;
         })
         .catch(e => console.error("Errore AJAX:", e));
 }
 
-updateMessagesGrid2();
+updateMessagesGrid2(); // Carica i messaggi al caricamento della pagina
