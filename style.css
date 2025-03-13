@@ -1,0 +1,30 @@
+body {
+    background-color: black;
+    height: 100vh;
+    /* overflow: hidden; Evita il doppio scrolling */
+    display: flex;
+    flex-direction: column;
+    background-image: url('/isola.jpg'); /* Sostituisci con il percorso della tua immagine */
+    background-size: cover;    /* L'immagine copre tutta la viewport senza stirarsi */
+    background-position: center; /* Centra l'immagine */
+    background-repeat: no-repeat; /* Evita ripetizioni */
+    background-attachment: fixed; /* Mantiene lo sfondo fisso */ 
+    background-color: rgba(255, 255, 255, 0.1); /* Sfondo bianco molto trasparente */
+    background-blend-mode: lighten; /* Mescola con il bianco per più trasparenza */
+
+};
+
+#titleMain {
+    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-weight: bolder;
+    font-size: larger;
+
+}
+
+.backHeaderText,
+.backMainText,
+.backSectionText {
+    background-color: rgba(0, 0, 0, 0.65)
+}
+
+
