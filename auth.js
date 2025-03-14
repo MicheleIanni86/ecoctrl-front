@@ -66,13 +66,19 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log("Risultato dal server:", result); // ✅ Debug
 
             if (result.success) {
-                localStorage.setItem("user", JSON.stringify(result.user));
+                if (isLogin) {
+                    // ✅ Login: Salva i dati dell'utente e reindirizza
+                    localStorage.setItem("user", JSON.stringify(result.user));
 
-                // ✅ Reindirizzamento corretto in base al ruolo
-                if (result.user.role === "Client") {
-                    window.location.href = "index.html"; // Client va su index.html
-                } else if (result.user.role === "Admin") {
-                    window.location.href = "http://localhost/ecoctrl-back/message.php"; // Admin va su message.php
+                    if (result.user.role === "Client") {
+                        window.location.href = "index.html"; // Client va su index.html
+                    } else if (result.user.role === "Admin") {
+                        window.location.href = "http://localhost/ecoctrl-back/message.php"; // Admin va su message.php
+                    }
+                } else {
+                    // ✅ Registrazione completata: Mostra alert e reindirizza alla login
+                    alert("Registrazione completata! Ora puoi accedere.");
+                    window.location.href = "auth.html"; // Torna alla login
                 }
             } else {
                 alert(result.message);
