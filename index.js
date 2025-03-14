@@ -11,7 +11,10 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("userInfo").textContent = `${user.name} ${user.surname}`;
     }
 
-    updateMessagesGrid2(); // ✅ Carica i messaggi al caricamento della pagina
+
+    // ✅ Chiamiamo la funzione al caricamento della pagina
+document.addEventListener("DOMContentLoaded", updateUserTicketsGrid);
+    // updateMessagesGrid2(); // ✅ Carica i messaggi al caricamento della pagina
 });
 
 // ✅ Gestione invio segnalazione
@@ -53,7 +56,7 @@ document.getElementById("ticketForm").onsubmit = async function (e) {
         if (result.success) {
             alert("Segnalazione inviata con successo!");
             document.getElementById("ticketForm").reset();
-            updateMessagesGrid2(); // ✅ Aggiorna la lista dei messaggi
+            updateUserTicketsGrid(); // ✅ Aggiorna la lista dei messaggi
         } else {
             alert("Errore nell'invio della segnalazione: " + result.message);
         }
@@ -62,42 +65,96 @@ document.getElementById("ticketForm").onsubmit = async function (e) {
     }
 };
 
-// ✅ Funzione per aggiornare la lista delle segnalazioni (ora usa `tickets`)
-function updateMessagesGrid2() {
-    console.log("📡 Sto inviando richiesta GET a getMessages...");
+// ✅ Funzione per aggiornare la lista delle segnalazioni
+// function updateMessagesGrid2() {
+//     console.log("📡 Sto inviando richiesta GET a getMessages...");
 
-    fetch(`${API_URL}?action=getMessages`)
-        .then(response => response.text())  // ✅ Riceviamo la risposta come testo per debug
-        .then(data => {
-            console.log("📥 Risposta grezza dal server:", data);  // ✅ Log per capire cosa arriva realmente
+//     fetch(`${API_URL}?action=getMessages`)
+//         .then(response => response.text())  // ✅ Riceviamo la risposta come testo per debug
+//         .then(data => {
 
-            try {
-                const jsonData = JSON.parse(data); // ✅ Proviamo a convertire in JSON
-                console.log("📥 Risposta da getMessages:", jsonData);
+//             try {
+//                 const jsonData = JSON.parse(data); // ✅ Proviamo a convertire in JSON
+//                 console.log("📥 Risposta da getMessages:", jsonData);
 
-                if (!jsonData.success) {
-                    console.error("❌ Errore: " + jsonData.message);
-                    return;
-                }
+//                 if (!jsonData.success) {
+//                     console.error("❌ Errore: " + jsonData.message);
+//                     return;
+//                 }
 
-                if (!jsonData.messages || jsonData.messages.length === 0) {
-                    console.warn("⚠️ Nessun messaggio ricevuto dal server.");
-                    document.getElementById("messagesGrid2").innerHTML = "<tr><td colspan='3'>Nessuna segnalazione trovata.</td></tr>";
-                    return;
-                }
+//                 if (!jsonData.messages || jsonData.messages.length === 0) {
+//                     console.warn("⚠️ Nessun messaggio ricevuto dal server.");
+//                     document.getElementById("messagesGrid2").innerHTML = "<tr><td colspan='3'>Nessuna segnalazione trovata.</td></tr>";
+//                     return;
+//                 }
 
-                let html = "";
-                jsonData.messages.forEach(m => {
-                    html += `<tr><td class="fw-bold fs-5">${m.user}</td><td>${m.message}</td><td>${m.timestamp}</td></tr>`;
-                });
-                document.getElementById("messagesGrid2").innerHTML = html;
-            } catch (error) {
-                console.error("❌ Errore nel parsing JSON:", error);
-                console.error("📌 Risposta grezza dal server che ha causato l'errore:", data);  // ✅ Log importante
-            }
-        })
-        .catch(error => console.error("❌ Errore AJAX:", error));
+//                 let html = "";
+//                 jsonData.messages.forEach(m => {
+//                     html += `<tr><td class="fw-bold fs-5">${m.user}</td><td>${m.message}</td><td>${m.timestamp}</td></tr>`;
+//                 });
+//                 document.getElementById("messagesGrid2").innerHTML = html;
+//             } catch (error) {
+//                 console.error("❌ Errore nel parsing JSON:", error);
+//                 console.error("📌 Risposta grezza dal server che ha causato l'errore:", data);  // ✅ Log importante
+//             }
+//         })
+//         .catch(error => console.error("❌ Errore AJAX:", error));
+// }
+
+
+
+
+
+
+function updateUserTicketsGrid() {
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (!user) {
+        console.error("❌ Nessun utente loggato!");
+        return;
+    }
+
+    console.log(`📡 Sto inviando richiesta POST a getUserTickets per user_id ${user.id}`);
+
+    fetch(API_URL, {  // ✅ Ora usiamo POST invece di GET
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "getUserTickets", user_id: user.id })  // ✅ Passiamo i dati nel body
+    })
+    .then(response => response.json())  // ✅ Decodifica direttamente in JSON
+    .then(jsonData => {
+        console.log("📥 Risposta JSON da getUserTickets:", jsonData);
+
+        if (!jsonData.success) {
+            console.error("❌ Errore: " + jsonData.message);
+            return;
+        }
+
+        if (!jsonData.tickets || jsonData.tickets.length === 0) {
+            console.warn("⚠️ Nessun ticket trovato.");
+            document.getElementById("messagesGrid2").innerHTML = "<tr><td colspan='3'>Nessun ticket trovato.</td></tr>";
+            return;
+        }
+
+        let html = "";
+        jsonData.tickets.forEach(t => {
+            html += `<tr>
+                <td class="fw-bold fs-5">${t.message}</td>
+                <td>${t.timestamp}</td>
+                <td>${t.status}</td>
+            </tr>`;
+        });
+        document.getElementById("messagesGrid2").innerHTML = html;
+    })
+    .catch(error => console.error("❌ Errore AJAX:", error));
 }
+
+// ✅ Chiamiamo la funzione al caricamento della pagina
+document.addEventListener("DOMContentLoaded", updateUserTicketsGrid);
+
+
+
+
 
 
 
