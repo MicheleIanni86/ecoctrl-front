@@ -72,7 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     if (result.user.role === "Client") {
                         window.location.href = "index.html"; // Client va su index.html
-                    } else if (result.user.role === "Admin") {
+                    } else {
                         window.location.href = "http://localhost/ecoctrl-back/message.php"; // Admin va su message.php
                     }
                 } else {
