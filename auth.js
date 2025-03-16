@@ -56,24 +56,25 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("Sto inviando questa richiesta:", JSON.stringify(data)); // ✅ Debug
 
         try {
-            const response = await fetch("http://localhost/ecoctrl-back/api.php", {
+            const response = await fetch("../ecoctrl-back/api.php", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data),
             });
 
             const result = await response.json();
-            console.log("Risultato dal server:", result); // ✅ Debug
+            console.log("Risultato dal server:", result);
 
             if (result.success) {
                 if (isLogin) {
-                    // ✅ Login: Salva i dati dell'utente e reindirizza
+                    // ✅ Salva i dati dell'utente nel localStorage
                     localStorage.setItem("user", JSON.stringify(result.user));
 
+                    // ✅ Redirect in base al ruolo
                     if (result.user.role === "Client") {
                         window.location.href = "index.html"; // Client va su index.html
                     } else {
-                        window.location.href = "http://localhost/ecoctrl-back/message.php"; // Admin va su message.php
+                        window.location.href = "http://localhost/ecoctrl-back/message.php"; // Admin e SuperAdmin vanno su message.php
                     }
                 } else {
                     // ✅ Registrazione completata: Mostra alert e reindirizza alla login

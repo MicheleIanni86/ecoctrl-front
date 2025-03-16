@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     // ✅ Chiamiamo la funzione al caricamento della pagina
-document.addEventListener("DOMContentLoaded", updateUserTicketsGrid);
+    document.addEventListener("DOMContentLoaded", updateUserTicketsGrid);
     // updateMessagesGrid2(); // ✅ Carica i messaggi al caricamento della pagina
 });
 
@@ -44,7 +44,7 @@ document.getElementById("ticketForm").onsubmit = async function (e) {
     console.log("📤 Sto inviando questa richiesta:", requestData); // ✅ Debug
 
     try {
-        const response = await fetch(`${API_URL}?action=createTicket`, {
+        const response = await fetch("../ecoctrl-back/api.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(requestData)
@@ -116,37 +116,37 @@ function updateUserTicketsGrid() {
 
     console.log(`📡 Sto inviando richiesta POST a getUserTickets per user_id ${user.id}`);
 
-    fetch(API_URL, {  // ✅ Ora usiamo POST invece di GET
+    fetch("../localhost/ecoctrl-back/api.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "getUserTickets", user_id: user.id })  // ✅ Passiamo i dati nel body
+        body: JSON.stringify({ action: "getUserTickets", user_id: user.id })
     })
-    .then(response => response.json())  // ✅ Decodifica direttamente in JSON
-    .then(jsonData => {
-        console.log("📥 Risposta JSON da getUserTickets:", jsonData);
+        .then(response => response.json())
+        .then(jsonData => {
+            console.log("📥 Risposta JSON da getUserTickets:", jsonData);
 
-        if (!jsonData.success) {
-            console.error("❌ Errore: " + jsonData.message);
-            return;
-        }
+            if (!jsonData.success) {
+                console.error("❌ Errore: " + jsonData.message);
+                return;
+            }
 
-        if (!jsonData.tickets || jsonData.tickets.length === 0) {
-            console.warn("⚠️ Nessun ticket trovato.");
-            document.getElementById("messagesGrid2").innerHTML = "<tr><td colspan='3'>Nessun ticket trovato.</td></tr>";
-            return;
-        }
+            if (!jsonData.tickets || jsonData.tickets.length === 0) {
+                console.warn("⚠️ Nessun ticket trovato.");
+                document.getElementById("messagesGrid2").innerHTML = "<tr><td colspan='3'>Nessun ticket trovato.</td></tr>";
+                return;
+            }
 
-        let html = "";
-        jsonData.tickets.forEach(t => {
-            html += `<tr>
+            let html = "";
+            jsonData.tickets.forEach(t => {
+                html += `<tr>
                 <td class="fw-bold fs-5">${t.message}</td>
                 <td>${t.timestamp}</td>
                 <td>${t.status}</td>
             </tr>`;
-        });
-        document.getElementById("messagesGrid2").innerHTML = html;
-    })
-    .catch(error => console.error("❌ Errore AJAX:", error));
+            });
+            document.getElementById("messagesGrid2").innerHTML = html;
+        })
+        .catch(error => console.error("❌ Errore AJAX:", error));
 }
 
 // ✅ Chiamiamo la funzione al caricamento della pagina
