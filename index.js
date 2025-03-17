@@ -9,13 +9,12 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
         // ✅ Mostra il nome dell'utente loggato accanto a "Utente"
         document.getElementById("userInfo").textContent = `${user.name} ${user.surname}`;
+
+        // ✅ Carica subito i ticket appena il Client accede
+        updateUserTicketsGrid();
     }
-
-
-    // ✅ Chiamiamo la funzione al caricamento della pagina
-    document.addEventListener("DOMContentLoaded", updateUserTicketsGrid);
-    // updateMessagesGrid2(); // ✅ Carica i messaggi al caricamento della pagina
 });
+
 
 // ✅ Gestione invio segnalazione
 document.getElementById("ticketForm").onsubmit = async function (e) {
@@ -35,13 +34,17 @@ document.getElementById("ticketForm").onsubmit = async function (e) {
     }
 
     // ✅ Creiamo il corpo della richiesta
+    const categoryId = document.getElementById("ticketCategory").value; // ✅ Recuperiamo l'ID della categoria
+
     const requestData = {
         action: "createTicket",
         user_id: user.id,
-        description: messageText
+        description: messageText,
+        ticketCat_id: categoryId // ✅ Aggiungiamo la categoria alla richiesta
     };
 
     console.log("📤 Sto inviando questa richiesta:", requestData); // ✅ Debug
+
 
     try {
         const response = await fetch("../ecoctrl-back/api.php", {
@@ -65,92 +68,85 @@ document.getElementById("ticketForm").onsubmit = async function (e) {
     }
 };
 
-// ✅ Funzione per aggiornare la lista delle segnalazioni
-// function updateMessagesGrid2() {
-//     console.log("📡 Sto inviando richiesta GET a getMessages...");
 
-//     fetch(`${API_URL}?action=getMessages`)
-//         .then(response => response.text())  // ✅ Riceviamo la risposta come testo per debug
-//         .then(data => {
-
-//             try {
-//                 const jsonData = JSON.parse(data); // ✅ Proviamo a convertire in JSON
-//                 console.log("📥 Risposta da getMessages:", jsonData);
-
-//                 if (!jsonData.success) {
-//                     console.error("❌ Errore: " + jsonData.message);
-//                     return;
-//                 }
-
-//                 if (!jsonData.messages || jsonData.messages.length === 0) {
-//                     console.warn("⚠️ Nessun messaggio ricevuto dal server.");
-//                     document.getElementById("messagesGrid2").innerHTML = "<tr><td colspan='3'>Nessuna segnalazione trovata.</td></tr>";
-//                     return;
-//                 }
-
-//                 let html = "";
-//                 jsonData.messages.forEach(m => {
-//                     html += `<tr><td class="fw-bold fs-5">${m.user}</td><td>${m.message}</td><td>${m.timestamp}</td></tr>`;
-//                 });
-//                 document.getElementById("messagesGrid2").innerHTML = html;
-//             } catch (error) {
-//                 console.error("❌ Errore nel parsing JSON:", error);
-//                 console.error("📌 Risposta grezza dal server che ha causato l'errore:", data);  // ✅ Log importante
-//             }
-//         })
-//         .catch(error => console.error("❌ Errore AJAX:", error));
-// }
-
-
-
-
-
-
-function updateUserTicketsGrid() {
+async function updateUserTicketsGrid() {
     const user = JSON.parse(localStorage.getItem("user"));
-
-    if (!user) {
-        console.error("❌ Nessun utente loggato!");
+    if (!user || user.role !== "Client") {
+        console.error("❌ Nessun utente Client loggato!");
         return;
     }
 
-    console.log(`📡 Sto inviando richiesta POST a getUserTickets per user_id ${user.id}`);
+    try {
+        const response = await fetch(`${API_URL}?action=getUserTickets&user_id=${user.id}`);
+        const jsonData = await response.json();
 
-    fetch("../localhost/ecoctrl-back/api.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "getUserTickets", user_id: user.id })
-    })
-        .then(response => response.json())
-        .then(jsonData => {
-            console.log("📥 Risposta JSON da getUserTickets:", jsonData);
+        if (!jsonData.success) {
+            console.error("❌ Errore: " + jsonData.message);
+            return;
+        }
 
-            if (!jsonData.success) {
-                console.error("❌ Errore: " + jsonData.message);
-                return;
-            }
+        const tableBody = document.getElementById("messagesGrid2");
 
-            if (!jsonData.tickets || jsonData.tickets.length === 0) {
-                console.warn("⚠️ Nessun ticket trovato.");
-                document.getElementById("messagesGrid2").innerHTML = "<tr><td colspan='3'>Nessun ticket trovato.</td></tr>";
-                return;
-            }
+        if (!tableBody) {
+            console.error("❌ Errore: L'elemento con ID 'messagesGrid2' non esiste nella pagina.");
+            return;
+        }
 
-            let html = "";
-            jsonData.tickets.forEach(t => {
-                html += `<tr>
-                <td class="fw-bold fs-5">${t.message}</td>
-                <td>${t.timestamp}</td>
-                <td>${t.status}</td>
-            </tr>`;
-            });
-            document.getElementById("messagesGrid2").innerHTML = html;
-        })
-        .catch(error => console.error("❌ Errore AJAX:", error));
+        tableBody.innerHTML = "";
+
+
+        if (!jsonData.tickets || jsonData.tickets.length === 0) {
+            tableBody.innerHTML = "<tr><td colspan='4'>Nessun ticket trovato.</td></tr>";
+            return;
+        }
+
+        jsonData.tickets.forEach(ticket => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td class="fw-bold fs-5">${ticket.message}</td>
+                <td>${ticket.timestamp}</td>
+                <td>${ticket.status}</td>
+            `;
+            tableBody.appendChild(row);
+        });
+    } catch (error) {
+        console.error("❌ Errore AJAX:", error);
+    }
 }
 
-// ✅ Chiamiamo la funzione al caricamento della pagina
-document.addEventListener("DOMContentLoaded", updateUserTicketsGrid);
+async function loadCategories() {
+    try {
+        const response = await fetch(`${API_URL}?action=get_ticket_categories`);
+        const textResponse = await response.text(); // ✅ Leggiamo la risposta come testo per debug
+        console.log("📥 Risposta API categorie (testo):", textResponse);
+
+        const categories = JSON.parse(textResponse); // ✅ Convertiamo in JSON
+        console.log("📥 Risposta API categorie (JSON):", categories);
+
+        if (!Array.isArray(categories)) {
+            throw new Error("❌ Errore: La risposta non è un array valido.");
+        }
+
+        const select = document.getElementById("ticketCategory");
+        select.innerHTML = "<option value=''>Seleziona una categoria...</option>";
+
+        categories.forEach(category => {
+            const option = document.createElement("option");
+            option.value = category.id;
+            option.textContent = category.name;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error("❌ Errore nel caricamento delle categorie:", error);
+    }
+}
+
+// ✅ Carichiamo le categorie quando la pagina si carica
+document.addEventListener("DOMContentLoaded", loadCategories);
+
+
+
+
 
 
 

@@ -24,7 +24,9 @@
       <!-- index.html -->
       <form id="ticketForm">
         <div class="mb-3">
-          <label for="segnalazione" class="form-label fs-2">SEGNALAZIONE</label>
+          <label for="segnalazione" class="form-label fs-2"
+            >SEGNALAZIONE di <span id="userInfo" class="fw-bold"></span
+          ></label>
           <textarea
             class="form-control"
             id="segnalazione"
@@ -35,27 +37,31 @@
             La segnalazione deve contenere almeno 10 caratteri.
           </div>
         </div>
-        <button type="submit" class="btn btn-light">Conferma</button>
+        <label for="ticketCategory" class="form-label text-white"
+          >Seleziona Categoria:</label
+        >
+        <select id="ticketCategory" class="form-select" required>
+          <option value="">Seleziona una categoria...</option>
+        </select>
+
+        <button type="submit" class="btn btn-light mt-3">Conferma</button>
       </form>
     </main>
 
     <section class="container mt-4">
       <div class="container-fluid bg-warning rounded">
-        <h2 class="text-center my-3 p-3">
-          &#9660; Segnalazioni inviate &#9660;
-        </h2>
-      </div>
-
-      <div class="row g-3 mt-3">
-        <table class="table table-dark table-striped rounded pb-4 text-center">
-          <thead class="text-center">
-            <tr class="text-center">
-              <th scope="col">NOME</th>
-              <th scope="col">MESSAGGIO</th>
-              <th scope="col">DATA</th>
+        <h3 class="text-center">I tuoi Ticket Inviati</h3>
+        <table class="table table-striped bg-light">
+          <thead class="table-dark text-center">
+            <tr>
+              <th>ID</th>
+              <th>Descrizione</th>
+              <th>Data</th>
             </tr>
           </thead>
-          <tbody id="messagesGrid2"></tbody>
+          <tbody id="messagesGrid2">
+            <!-- Qui verranno caricati i ticket dal JavaScript -->
+          </tbody>
         </table>
       </div>
 
