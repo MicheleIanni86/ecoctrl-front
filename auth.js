@@ -72,10 +72,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     // ✅ Redirect in base al ruolo
                     if (result.user.role === "Client") {
-                        window.location.href = "index.html"; // Client va su index.html
-                    } else {
-                        window.location.href = "http://localhost/ecoctrl-back/message.php"; // Admin e SuperAdmin vanno su message.php
+                        window.location.href = "index.html";
+                    } else if (result.user.role === "Admin") {
+                        window.location.href = "http://localhost/ecoctrl-back/message.php";
+                    } else if (result.user.role === "SuperAdmin") {
+                        window.location.href = "http://localhost/ecoctrl-back/manage_categories.php";
                     }
+
                 } else {
                     // ✅ Registrazione completata: Mostra alert e reindirizza alla login
                     alert("Registrazione completata! Ora puoi accedere.");
